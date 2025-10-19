@@ -25,3 +25,4 @@ dist-ssr
 
 .vercel
 public/data/*.json
+public/data/
