@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2, BookOpen, X, ExternalLink, Copy, Check, Globe } from 'lucide-react';
 import dictionaryService from '../services/dictionaryService';
 import furiganaService from '../services/furiganaService';
@@ -16,7 +16,6 @@ function TranslationPanel({ selectedText, onClear }) {
   const [activeTab, setActiveTab] = useState('dictionary');
   const [apiTranslation, setApiTranslation] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
-  const googleTranslateRef = useRef(null);
 
   // Initialize services
   useEffect(() => {
@@ -48,7 +47,6 @@ function TranslationPanel({ selectedText, onClear }) {
       setApiTranslation(null);
 
       try {
-        // Get furigana and romaji
         const [hira, roma] = await Promise.all([
           furiganaService.toHiragana(selectedText),
           furiganaService.toRomaji(selectedText)
@@ -57,7 +55,6 @@ function TranslationPanel({ selectedText, onClear }) {
         setHiragana(hira);
         setRomaji(roma);
 
-        // Dictionary lookup
         const results = dictionaryService.findBestMatch(selectedText);
         if (results.length > 0) {
           setTranslation(results[0]);
@@ -66,7 +63,6 @@ function TranslationPanel({ selectedText, onClear }) {
           setError('Not found in dictionary. Try Online Translation tab.');
         }
 
-        // Create Google Translate URL
         const encodedText = encodeURIComponent(selectedText);
         const translateUrl = `https://translate.google.com/?sl=ja&tl=en&text=${encodedText}&op=translate`;
         setGoogleTranslateUrl(translateUrl);
@@ -84,14 +80,12 @@ function TranslationPanel({ selectedText, onClear }) {
     processText();
   }, [selectedText, isInitializing]);
 
-  // Get online translation when switching to online tab
   useEffect(() => {
     if (activeTab === 'online' && selectedText && !apiTranslation && !isTranslating) {
       fetchOnlineTranslation();
     }
   }, [activeTab, selectedText]);
 
-  // Fetch online translation
   const fetchOnlineTranslation = async () => {
     setIsTranslating(true);
     try {
@@ -104,7 +98,6 @@ function TranslationPanel({ selectedText, onClear }) {
     }
   };
 
-  // Copy to clipboard
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(selectedText);
@@ -118,12 +111,9 @@ function TranslationPanel({ selectedText, onClear }) {
   // Loading state
   if (isInitializing) {
     return (
-      <div className="h-full flex flex-col">
-        <h2 className="text-xl font-bold mb-4 text-white">Translation Panel</h2>
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-          <p className="text-gray-400 text-sm">Loading dictionary...</p>
-        </div>
+      <div className="h-full flex flex-col items-center justify-center">
+        <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-4" />
+        <p className="text-gray-400 text-sm">Loading dictionary...</p>
       </div>
     );
   }
@@ -131,18 +121,14 @@ function TranslationPanel({ selectedText, onClear }) {
   // Empty state
   if (!selectedText) {
     return (
-      <div className="h-full flex flex-col">
-        <h2 className="text-xl font-bold mb-4 text-white">Translation Panel</h2>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center text-gray-400">
-            <BookOpen className="w-12 h-12 mx-auto mb-4 text-gray-600" />
-            <p className="text-sm mb-2">Select subtitle text to translate</p>
-            <div className="mt-4 text-xs text-gray-500 space-y-1">
-              <p>1. Load video</p>
-              <p>2. Load .srt subtitle</p>
-              <p>3. Click and drag to select text</p>
-            </div>
-          </div>
+      <div className="h-full flex flex-col items-center justify-center">
+        <BookOpen className="w-12 h-12 mb-4 text-gray-600" />
+        <h2 className="text-xl font-bold mb-2 text-white">Translation Panel</h2>
+        <p className="text-sm mb-2 text-gray-400">Select subtitle text to translate</p>
+        <div className="mt-4 text-xs text-gray-500 space-y-1 text-center">
+          <p>1. Load video</p>
+          <p>2. Load .srt subtitle</p>
+          <p>3. Click and drag to select text</p>
         </div>
       </div>
     );
@@ -150,86 +136,87 @@ function TranslationPanel({ selectedText, onClear }) {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-white">Translation</h2>
-        {onClear && (
-          <button
-            onClick={onClear}
-            className="text-gray-400 hover:text-white transition"
-            title="Clear selection"
-          >
-            <X size={20} />
-          </button>
-        )}
-      </div>
+      {/* Scrollable container for ALL content */}
+      <div className="flex-1 overflow-y-auto -webkit-overflow-scrolling-touch">
+        {/* Header - Sticky */}
+        <div className="sticky top-0 bg-gray-800 z-10 pb-3 mb-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-white">Translation</h2>
+            {onClear && (
+              <button
+                onClick={onClear}
+                className="text-gray-400 hover:text-white transition"
+                title="Clear selection"
+              >
+                <X size={20} />
+              </button>
+            )}
+          </div>
+        </div>
 
-      {/* Selected Text with Pronunciation - Always Visible */}
-      <div className="bg-gray-700 rounded-lg p-4 mb-4 flex-shrink-0">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="text-xs text-gray-400">Selected Text</h3>
+        {/* Selected Text with Pronunciation */}
+        <div className="bg-gray-700 rounded-lg p-4 mb-4">
+          <div className="flex items-start justify-between mb-2">
+            <h3 className="text-xs text-gray-400">Selected Text</h3>
+            <button
+              onClick={copyToClipboard}
+              className="text-gray-400 hover:text-white transition"
+              title="Copy to clipboard"
+            >
+              {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+            </button>
+          </div>
+          <p className="text-2xl text-white font-medium mb-3 select-text">{selectedText}</p>
+          
+          {hiragana && hiragana !== selectedText && (
+            <div className="border-t border-gray-600 pt-2 mt-2">
+              <p className="text-xs text-gray-400 mb-1">Furigana (Hiragana Reading)</p>
+              <p className="text-lg text-blue-300">{hiragana}</p>
+            </div>
+          )}
+
+          {romaji && (
+            <div className="border-t border-gray-600 pt-2 mt-2">
+              <p className="text-xs text-gray-400 mb-1">Romaji (Pronunciation Guide)</p>
+              <p className="text-base text-green-300 italic font-medium">{romaji}</p>
+            </div>
+          )}
+
+          <div className="border-t border-gray-600 pt-2 mt-2">
+            <p className="text-xs text-gray-500">
+              💡 Romaji shows how to pronounce the Japanese text in English letters
+            </p>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-4">
           <button
-            onClick={copyToClipboard}
-            className="text-gray-400 hover:text-white transition"
-            title="Copy to clipboard"
+            onClick={() => setActiveTab('dictionary')}
+            className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition ${
+              activeTab === 'dictionary'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
           >
-            {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+            📚 Dictionary
+          </button>
+          <button
+            onClick={() => setActiveTab('online')}
+            className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition ${
+              activeTab === 'online'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+            }`}
+          >
+            🌐 Online
           </button>
         </div>
-        <p className="text-2xl text-white font-medium mb-3 select-text">{selectedText}</p>
-        
-        {/* Furigana - ALWAYS SHOWN */}
-        {hiragana && hiragana !== selectedText && (
-          <div className="border-t border-gray-600 pt-2 mt-2">
-            <p className="text-xs text-gray-400 mb-1">Furigana (Hiragana Reading)</p>
-            <p className="text-lg text-blue-300">{hiragana}</p>
-          </div>
-        )}
 
-        {/* Romaji - ALWAYS SHOWN */}
-        {romaji && (
-          <div className="border-t border-gray-600 pt-2 mt-2">
-            <p className="text-xs text-gray-400 mb-1">Romaji (Pronunciation Guide)</p>
-            <p className="text-base text-green-300 italic font-medium">{romaji}</p>
-          </div>
-        )}
-
-        <div className="border-t border-gray-600 pt-2 mt-2">
-          <p className="text-xs text-gray-500">
-            💡 Romaji shows how to pronounce the Japanese text in English letters
-          </p>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-2 mb-4 flex-shrink-0">
-        <button
-          onClick={() => setActiveTab('dictionary')}
-          className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition ${
-            activeTab === 'dictionary'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
-        >
-          📚 Dictionary
-        </button>
-        <button
-          onClick={() => setActiveTab('online')}
-          className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition ${
-            activeTab === 'online'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
-        >
-          🌐 Online
-        </button>
-      </div>
-
-      {/* Tab Content */}
-      <div className="flex-1 overflow-y-auto">
+        {/* Tab Content */}
         {activeTab === 'dictionary' ? (
           // Dictionary Tab
-          <div>
+          <div className="pb-4">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
@@ -298,8 +285,7 @@ function TranslationPanel({ selectedText, onClear }) {
           </div>
         ) : (
           // Online Translation Tab
-          <div className="space-y-3">
-            {/* Open in Google Translate */}
+          <div className="space-y-3 pb-4">
             <a
               href={googleTranslateUrl}
               target="_blank"
@@ -313,7 +299,6 @@ function TranslationPanel({ selectedText, onClear }) {
               </div>
             </a>
 
-            {/* API Translation */}
             <div className="bg-gray-700 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Globe size={16} className="text-blue-400" />
@@ -353,7 +338,6 @@ function TranslationPanel({ selectedText, onClear }) {
               )}
             </div>
 
-            {/* Pronunciation Note */}
             <div className="bg-gray-700 rounded-lg p-4">
               <p className="text-xs text-gray-400 mb-2">📢 About Pronunciation:</p>
               <p className="text-xs text-gray-300">
@@ -362,7 +346,6 @@ function TranslationPanel({ selectedText, onClear }) {
               </p>
             </div>
 
-            {/* Tips */}
             <div className="text-xs text-gray-500 bg-gray-700 rounded-lg p-3">
               <p className="mb-2"><strong>💡 Tips:</strong></p>
               <ul className="space-y-1 ml-4">

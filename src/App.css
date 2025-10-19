@@ -79,3 +79,9 @@
     font-size: 1rem;
   }
 }
+
+
+.touch-scroll {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+}
