@@ -433,6 +433,7 @@ function VideoPlayer({ onTextSelect }) {
         selectedText={selectedText}
         onClear={handleClearSelection}
         isVisible={isMobile || isFullscreen}
+        isFullscreen={isFullscreen}
         onToggle={() => setShowMobilePanel(!showMobilePanel)}
         dictionaryService={dictionaryService}
         furiganaService={furiganaService}

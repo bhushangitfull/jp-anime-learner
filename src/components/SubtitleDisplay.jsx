@@ -119,7 +119,7 @@ function SubtitleDisplay({ subtitle, onTextSelect, isMobile }) {
         </p>
         {isMobile && !isSelecting && (
           <p className="text-xs text-gray-400 text-center mt-2">
-            Tap to select word • Long press to select text
+            
           </p>
         )}
         {isMobile && isSelecting && (

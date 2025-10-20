@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, X, Loader2, BookOpen, Globe, Copy, Check } from 'lucide-react';
 
-function MobileTranslationPanel({ 
-  selectedText, 
+function MobileTranslationPanel({
+  selectedText,
   onClear,
   isVisible,
+  isFullscreen,
   onToggle,
   dictionaryService,
   furiganaService,
-  translationAPIService 
+  translationAPIService
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -111,8 +112,8 @@ function MobileTranslationPanel({
       )}
 
       {/* Sliding Panel */}
-      <div 
-        className={`fixed top-0 right-0 h-full w-[85vw] max-w-md bg-gray-800 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 ${
+      <div
+        className={`fixed top-0 right-0 h-full ${isFullscreen ? 'w-full max-w-none' : 'w-[85vw] max-w-md'} bg-gray-800 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
