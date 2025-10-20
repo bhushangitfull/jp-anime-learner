@@ -85,3 +85,17 @@
   -webkit-overflow-scrolling: touch;
   overflow-y: auto;
 }
+
+.translate-x-full {
+  transform: translateX(100%);
+}
+.translate-x-0 {
+  transform: translateX(0);
+}
+.rounded-l-full {
+  border-top-left-radius: 9999px;
+  border-bottom-left-radius: 9999px;
+}
+.w-80vw {
+  width: 80vw;
+}
