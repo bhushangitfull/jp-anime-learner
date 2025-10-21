@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import VideoPlayer from './components/VideoPlayer';
 import TranslationPanel from './components/TranslationPanel';
+import MobileTranslationPanel from './components/MobileTranslationPanel';
+import dictionaryService from './services/dictionaryService';
+import furiganaService from './services/furiganaService';
+import translationAPIService from './services/translationAPIService';
 
 function App() {
   const [selectedText, setSelectedText] = useState('');
@@ -53,20 +57,19 @@ function App() {
   const useMobileLayout = isMobile || isFullscreen;
 
   if (useMobileLayout) {
-    // Mobile/Fullscreen Layout: Full screen video with integrated mobile panel
+    // Mobile/Fullscreen Layout: Full screen video with slide-in mobile panel
     return (
       <div className="w-full h-screen overflow-hidden bg-gray-900 relative">
         <VideoPlayer onTextSelect={handleTextSelect} />
-        {selectedText && useMobileLayout && (
-          <div className="fixed bottom-0 left-0 right-0 max-h-[50vh] bg-gray-900 shadow-lg z-50">
-            <div className="h-full">
-              <TranslationPanel 
-                selectedText={selectedText}
-                onClear={handleClearSelection}
-              />
-            </div>
-          </div>
-        )}
+        <MobileTranslationPanel
+          selectedText={selectedText}
+          onClear={handleClearSelection}
+          isVisible={!!selectedText}
+          isFullscreen={isFullscreen}
+          dictionaryService={dictionaryService}
+          furiganaService={furiganaService}
+          translationAPIService={translationAPIService}
+        />
       </div>
     );
   }
