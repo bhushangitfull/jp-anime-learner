@@ -57,8 +57,8 @@ function App() {
     return (
       <div className="w-full h-screen overflow-hidden bg-gray-900 relative">
         <VideoPlayer onTextSelect={handleTextSelect} />
-        {selectedText && (
-          <div className="absolute bottom-0 left-0 right-0 max-h-[50vh] bg-gray-900 shadow-lg z-50">
+        {selectedText && useMobileLayout && (
+          <div className="fixed bottom-0 left-0 right-0 max-h-[50vh] bg-gray-900 shadow-lg z-50">
             <div className="h-full">
               <TranslationPanel 
                 selectedText={selectedText}
@@ -80,14 +80,16 @@ function App() {
       </div>
 
       {/* Right side - Translation Panel (30% on desktop) */}
-      <div className="w-full md:w-[30%] flex-1 h-full overflow-hidden bg-gray-800">
-        <div className="h-full overflow-y-auto p-4 md:p-6">
-          <TranslationPanel 
-            selectedText={selectedText}
-            onClear={handleClearSelection}
-          />
+      {!useMobileLayout && (
+        <div className="w-full md:w-[30%] flex-1 h-full overflow-hidden bg-gray-800">
+          <div className="h-full overflow-y-auto p-4 md:p-6">
+            <TranslationPanel 
+              selectedText={selectedText}
+              onClear={handleClearSelection}
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
