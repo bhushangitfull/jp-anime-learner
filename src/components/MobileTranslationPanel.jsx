@@ -10,13 +10,22 @@ function MobileTranslationPanel({
   furiganaService,
   translationAPIService
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   // Auto-open panel when text is selected
   useEffect(() => {
     if (selectedText) {
       setIsOpen(true);
+      // Ensure panel opens in fullscreen
+      if (isFullscreen) {
+        setTimeout(() => {
+          setIsOpen(true);
+        }, 100);
+      }
+    } else {
+      setIsOpen(false);
     }
-  }, [selectedText]);
-  const [isOpen, setIsOpen] = useState(false);
+  }, [selectedText, isFullscreen]);
   const [isLoading, setIsLoading] = useState(false);
   const [translation, setTranslation] = useState(null);
   const [hiragana, setHiragana] = useState('');
@@ -111,14 +120,17 @@ function MobileTranslationPanel({
       {/* Backdrop when open */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 bg-black bg-opacity-50 z-[9998]"
           onClick={() => setIsOpen(false)}
+          style={{ position: 'fixed' }}
         />
       )}
 
       {/* Sliding Panel */}
       <div
-        className={`fixed top-0 right-0 h-full ${isFullscreen ? 'w-full max-w-none' : 'w-[85vw] max-w-md'} bg-gray-800 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 ${
+        className={`fixed ${isFullscreen ? 'top-0' : 'top-0'} right-0 h-full 
+          ${isFullscreen ? 'w-[85vw] max-w-md' : 'w-[85vw] max-w-md'} 
+          bg-gray-800 shadow-2xl transform transition-transform duration-300 ease-in-out z-[9999] ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -291,8 +303,8 @@ function MobileTranslationPanel({
           onClick={handleToggle}
           className={`fixed right-0 ${
             isFullscreen ? 'top-16' : 'top-1/2 -translate-y-1/2'
-          } bg-blue-600 text-white p-3 rounded-l-lg shadow-lg z-50 hover:bg-blue-700 transition`}
-          style={{ touchAction: 'manipulation' }}
+          } bg-blue-600 text-white p-3 rounded-l-lg shadow-lg z-[9999] hover:bg-blue-700 transition`}
+          style={{ touchAction: 'manipulation', position: 'fixed' }}
         >
           <ChevronLeft size={24} />
         </button>
