@@ -26,11 +26,44 @@ function SubtitleDisplay({ subtitle, onTextSelect, isMobile }) {
   // Mobile touch selection
   const handleTouchStart = (e) => {
     if (!isMobile) return;
+    
+    // Prevent default to avoid unwanted text selection
+    if (!isSelecting) {
+      e.preventDefault();
+    }
+    
     touchStartRef.current = {
       time: Date.now(),
       x: e.touches[0].clientX,
-      y: e.touches[0].clientY
+      y: e.touches[0].clientY,
+      target: e.target
     };
+  };
+
+  const findKanjiWord = (node, offset) => {
+    const text = node.textContent;
+    let start = offset;
+    let end = offset;
+
+    // Helper to check if character is Kanji
+    const isKanji = (char) => {
+      const code = char.charCodeAt(0);
+      return (code >= 0x4e00 && code <= 0x9faf) || // Kanji
+             (code >= 0x3040 && code <= 0x309f) || // Hiragana
+             (code >= 0x30a0 && code <= 0x30ff);   // Katakana
+    };
+
+    // Find start of word (looking for non-Japanese character or space)
+    while (start > 0 && isKanji(text[start - 1])) {
+      start--;
+    }
+
+    // Find end of word (looking for non-Japanese character or space)
+    while (end < text.length && isKanji(text[end])) {
+      end++;
+    }
+
+    return { start, end, word: text.substring(start, end) };
   };
 
   const handleTouchEnd = (e) => {
@@ -39,53 +72,43 @@ function SubtitleDisplay({ subtitle, onTextSelect, isMobile }) {
     const touchDuration = Date.now() - touchStartRef.current.time;
     const touch = e.changedTouches[0];
     
+    // For quick taps, try to select the kanji word
     if (touchDuration < 300 && !isSelecting) {
-      // Quick tap = try to select word at tap position
       const range = document.caretRangeFromPoint(touch.clientX, touch.clientY);
       
       if (range && subtitleRef.current?.contains(range.startContainer)) {
-        const textNode = range.startContainer;
-        const text = textNode.textContent;
-        const offset = range.startOffset;
+        const { start, end, word } = findKanjiWord(range.startContainer, range.startOffset);
         
-        // Find word boundaries
-        let start = offset;
-        let end = offset;
-        
-        // Expand to word boundaries
-        while (start > 0 && !/\s/.test(text[start - 1])) start--;
-        while (end < text.length && !/\s/.test(text[end])) end++;
-        
-        const word = text.substring(start, end).trim();
         if (word) {
-          onTextSelect(word);
+          // Create a new range for the word
+          const newRange = document.createRange();
+          newRange.setStart(range.startContainer, start);
+          newRange.setEnd(range.startContainer, end);
           
-          // Visual feedback
+          // Update selection
           const selection = window.getSelection();
           selection.removeAllRanges();
-          const newRange = document.createRange();
-          newRange.setStart(textNode, start);
-          newRange.setEnd(textNode, end);
           selection.addRange(newRange);
           
-          setTimeout(() => selection.removeAllRanges(), 1000);
+          onTextSelect(word);
+          
+          // Clear selection after feedback
+          setTimeout(() => selection.removeAllRanges(), 1500);
         }
       }
-    } else {
-      // Long press or already in selection mode
-      // Get the selection after a short delay to ensure it's complete
-      setTimeout(() => {
-        const selection = window.getSelection();
-        const selectedText = selection.toString().trim();
-        
-        if (selectedText && subtitleRef.current?.contains(selection.anchorNode)) {
-          onTextSelect(selectedText);
-          setIsSelecting(false);
-        } else if (touchDuration > 300) {
-          // Long press = enable text selection mode
-          setIsSelecting(true);
-        }
-      }, 100);
+    } else if (touchDuration >= 300 && !isSelecting) {
+      // Long press activates selection mode
+      setIsSelecting(true);
+      e.preventDefault();
+    } else if (isSelecting) {
+      // In selection mode, check if we have a valid selection
+      const selection = window.getSelection();
+      const selectedText = selection.toString().trim();
+      
+      if (selectedText && subtitleRef.current?.contains(selection.anchorNode)) {
+        onTextSelect(selectedText);
+        setIsSelecting(false);
+      }
     }
   };
 
@@ -121,6 +144,13 @@ function SubtitleDisplay({ subtitle, onTextSelect, isMobile }) {
         } ${isSelecting ? styles.selectionMode : ''}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
+        onTouchMove={(e) => isSelecting && e.stopPropagation()}
+        style={{
+          WebkitTouchCallout: isSelecting ? 'default' : 'none',
+          WebkitUserSelect: isSelecting ? 'text' : 'none',
+          userSelect: isSelecting ? 'text' : 'none',
+          touchAction: isSelecting ? 'auto' : 'none'
+        }}
       >
         <p className={`subtitle text-white text-xl md:text-2xl font-medium leading-relaxed text-center whitespace-pre-wrap ${styles.subtitleText}`}>
           {subtitle.text}
