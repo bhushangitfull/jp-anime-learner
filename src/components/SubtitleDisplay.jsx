@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import styles from './SubtitleDisplay.module.css';
 
 function SubtitleDisplay({ subtitle, onTextSelect, isMobile }) {
   const subtitleRef = useRef(null);
@@ -25,23 +26,21 @@ function SubtitleDisplay({ subtitle, onTextSelect, isMobile }) {
   // Mobile touch selection
   const handleTouchStart = (e) => {
     if (!isMobile) return;
-    touchStartRef.current = Date.now();
+    touchStartRef.current = {
+      time: Date.now(),
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    };
   };
 
   const handleTouchEnd = (e) => {
     if (!isMobile) return;
     
-    const touchDuration = Date.now() - touchStartRef.current;
+    const touchDuration = Date.now() - touchStartRef.current.time;
+    const touch = e.changedTouches[0];
     
-    // Long press (> 300ms) = enable text selection mode
-    if (touchDuration > 300) {
-      setIsSelecting(true);
-      return;
-    }
-    
-    // Quick tap = select word at tap position
     if (touchDuration < 300 && !isSelecting) {
-      const touch = e.changedTouches[0];
+      // Quick tap = try to select word at tap position
       const range = document.caretRangeFromPoint(touch.clientX, touch.clientY);
       
       if (range && subtitleRef.current?.contains(range.startContainer)) {
@@ -72,6 +71,21 @@ function SubtitleDisplay({ subtitle, onTextSelect, isMobile }) {
           setTimeout(() => selection.removeAllRanges(), 1000);
         }
       }
+    } else {
+      // Long press or already in selection mode
+      // Get the selection after a short delay to ensure it's complete
+      setTimeout(() => {
+        const selection = window.getSelection();
+        const selectedText = selection.toString().trim();
+        
+        if (selectedText && subtitleRef.current?.contains(selection.anchorNode)) {
+          onTextSelect(selectedText);
+          setIsSelecting(false);
+        } else if (touchDuration > 300) {
+          // Long press = enable text selection mode
+          setIsSelecting(true);
+        }
+      }, 100);
     }
   };
 
@@ -103,18 +117,12 @@ function SubtitleDisplay({ subtitle, onTextSelect, isMobile }) {
       <div 
         ref={subtitleRef}
         className={`bg-black bg-opacity-80 px-6 py-3 rounded-lg max-w-4xl ${
-          isMobile ? 'cursor-pointer' : 'cursor-text'
-        } select-text`}
-        style={{
-          userSelect: 'text',
-          WebkitUserSelect: 'text',
-          MozUserSelect: 'text',
-          WebkitTouchCallout: isSelecting ? 'default' : 'none'
-        }}
+          styles.subtitleContainer
+        } ${isSelecting ? styles.selectionMode : ''}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        <p className="subtitle text-white text-xl md:text-2xl font-medium leading-relaxed text-center whitespace-pre-wrap">
+        <p className={`subtitle text-white text-xl md:text-2xl font-medium leading-relaxed text-center whitespace-pre-wrap ${styles.subtitleText}`}>
           {subtitle.text}
         </p>
         {isMobile && !isSelecting && (
