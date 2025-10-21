@@ -24,11 +24,13 @@ function VideoPlayer({ onTextSelect }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showMobilePanel, setShowMobilePanel] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(false);
   
   const videoRef = useRef(null);
   const progressBarRef = useRef(null);
   const controlsTimeoutRef = useRef(null);
   const subtitleInputRef = useRef(null);
+  const videoContainerRef = useRef(null);
 
   // Detect mobile device
   useEffect(() => {
@@ -432,8 +434,9 @@ function VideoPlayer({ onTextSelect }) {
       <MobileTranslationPanel
         selectedText={selectedText}
         onClear={handleClearSelection}
-        isVisible={isMobile || isFullscreen}
+        isVisible={showMobilePanel && (isMobile || isFullscreen)}
         isFullscreen={isFullscreen}
+        containerRef={videoContainerRef}
         onToggle={() => setShowMobilePanel(!showMobilePanel)}
         dictionaryService={dictionaryService}
         furiganaService={furiganaService}

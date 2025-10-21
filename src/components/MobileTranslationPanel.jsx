@@ -6,26 +6,39 @@ function MobileTranslationPanel({
   onClear,
   isVisible,
   isFullscreen,
+  containerRef,
   dictionaryService,
   furiganaService,
   translationAPIService
 }) {
+  const panelRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Auto-open panel when text is selected
+  // Position panel within container in fullscreen mode
   useEffect(() => {
-    if (selectedText) {
-      setIsOpen(true);
-      // Ensure panel opens in fullscreen
-      if (isFullscreen) {
-        setTimeout(() => {
-          setIsOpen(true);
-        }, 100);
-      }
+    if (isFullscreen && containerRef?.current && panelRef?.current) {
+      const container = containerRef.current;
+      const containerRect = container.getBoundingClientRect();
+      
+      // Update panel position
+      panelRef.current.style.position = 'absolute';
+      panelRef.current.style.top = '0px';
+      panelRef.current.style.right = '0px';
+      panelRef.current.style.height = `${containerRect.height}px`;
+    }
+  }, [isFullscreen, containerRef]);
+
+  // Handle panel visibility
+  useEffect(() => {
+    if (selectedText && isVisible) {
+      // Set a small delay to ensure smooth animation
+      requestAnimationFrame(() => {
+        setIsOpen(true);
+      });
     } else {
       setIsOpen(false);
     }
-  }, [selectedText, isFullscreen]);
+  }, [selectedText, isVisible]);
   const [isLoading, setIsLoading] = useState(false);
   const [translation, setTranslation] = useState(null);
   const [hiragana, setHiragana] = useState('');
@@ -105,12 +118,16 @@ function MobileTranslationPanel({
   };
 
   const handleToggle = () => {
-    setIsOpen(!isOpen);
+    requestAnimationFrame(() => {
+      setIsOpen(!isOpen);
+    });
   };
 
   const handleClose = () => {
     setIsOpen(false);
-    if (onClear) onClear();
+    setTimeout(() => {
+      if (onClear) onClear();
+    }, 300); // Match the transition duration
   };
 
   if (!isVisible) return null;
@@ -118,7 +135,7 @@ function MobileTranslationPanel({
   return (
     <>
       {/* Backdrop when open */}
-      {isOpen && (
+      {isOpen && !isFullscreen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-[9998]"
           onClick={() => setIsOpen(false)}
@@ -128,11 +145,18 @@ function MobileTranslationPanel({
 
       {/* Sliding Panel */}
       <div
-        className={`fixed ${isFullscreen ? 'top-0' : 'top-0'} right-0 h-full 
-          ${isFullscreen ? 'w-[85vw] max-w-md' : 'w-[85vw] max-w-md'} 
-          bg-gray-800 shadow-2xl transform transition-transform duration-300 ease-in-out z-[9999] ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        ref={panelRef}
+        className={`${isFullscreen ? 'absolute' : 'fixed'} top-0 right-0 h-full w-[85vw] max-w-md
+          bg-gray-800 shadow-2xl overflow-hidden
+          transition-all duration-300 ease-in-out
+          ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        style={{
+          willChange: 'transform',
+          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+          backfaceVisibility: 'hidden',
+          zIndex: isFullscreen ? 50 : 9999,
+          position: isFullscreen && containerRef ? 'absolute' : 'fixed'
+        }}
       >
         {/* Panel Content */}
         <div className="h-full flex flex-col">
@@ -297,17 +321,20 @@ function MobileTranslationPanel({
         </div>
       </div>
 
-      {/* Toggle Button (when panel is closed) */}
-      {!isOpen && selectedText && (
-        <button
-          onClick={handleToggle}
-          className={`fixed right-0 ${
-            isFullscreen ? 'top-16' : 'top-1/2 -translate-y-1/2'
-          } bg-blue-600 text-white p-3 rounded-l-lg shadow-lg z-[9999] hover:bg-blue-700 transition`}
-          style={{ touchAction: 'manipulation', position: 'fixed' }}
+      {/* Toggle Button */}
+      {selectedText && !isOpen && (
+        <div 
+          className="fixed right-0 top-16 z-[9999]"
+          style={{ backfaceVisibility: 'hidden' }}
         >
-          <ChevronLeft size={24} />
-        </button>
+          <button
+            onClick={handleToggle}
+            className="bg-blue-600 text-white p-3 rounded-l-lg shadow-lg hover:bg-blue-700 transition-colors"
+            style={{ touchAction: 'manipulation' }}
+          >
+            <ChevronLeft size={24} />
+          </button>
+        </div>
       )}
     </>
   );
