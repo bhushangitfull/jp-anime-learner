@@ -3,7 +3,8 @@
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
   -ms-user-select: text !important;
-  touch-action: pan-y !important;
+  cursor: text !important;
+  touch-action: manipulation !important;
 }
 
 .selectionMode {
@@ -17,4 +18,5 @@
   -moz-user-select: text !important;
   -ms-user-select: text !important;
   cursor: text !important;
+  -webkit-touch-callout: default !important;
 }

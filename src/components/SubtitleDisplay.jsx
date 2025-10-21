@@ -26,88 +26,47 @@ function SubtitleDisplay({ subtitle, onTextSelect, isMobile }) {
   // Mobile touch selection
   const handleTouchStart = (e) => {
     if (!isMobile) return;
-    
-    // Prevent default to avoid unwanted text selection
-    if (!isSelecting) {
-      e.preventDefault();
-    }
-    
     touchStartRef.current = {
       time: Date.now(),
       x: e.touches[0].clientX,
-      y: e.touches[0].clientY,
-      target: e.target
+      y: e.touches[0].clientY
     };
   };
 
-  const findKanjiWord = (node, offset) => {
-    const text = node.textContent;
-    let start = offset;
-    let end = offset;
-
-    // Helper to check if character is Kanji
-    const isKanji = (char) => {
-      const code = char.charCodeAt(0);
-      return (code >= 0x4e00 && code <= 0x9faf) || // Kanji
-             (code >= 0x3040 && code <= 0x309f) || // Hiragana
-             (code >= 0x30a0 && code <= 0x30ff);   // Katakana
-    };
-
-    // Find start of word (looking for non-Japanese character or space)
-    while (start > 0 && isKanji(text[start - 1])) {
-      start--;
+  const handleSelectionChange = () => {
+    if (!isMobile) return;
+    
+    const selection = window.getSelection();
+    const selectedText = selection.toString().trim();
+    
+    if (selectedText && subtitleRef.current?.contains(selection.anchorNode)) {
+      onTextSelect(selectedText);
     }
-
-    // Find end of word (looking for non-Japanese character or space)
-    while (end < text.length && isKanji(text[end])) {
-      end++;
-    }
-
-    return { start, end, word: text.substring(start, end) };
   };
+
+  // Add selection change listener
+  useEffect(() => {
+    if (isMobile) {
+      document.addEventListener('selectionchange', handleSelectionChange);
+      return () => document.removeEventListener('selectionchange', handleSelectionChange);
+    }
+  }, [isMobile]);
 
   const handleTouchEnd = (e) => {
     if (!isMobile) return;
     
     const touchDuration = Date.now() - touchStartRef.current.time;
-    const touch = e.changedTouches[0];
     
-    // For quick taps, try to select the kanji word
-    if (touchDuration < 300 && !isSelecting) {
-      const range = document.caretRangeFromPoint(touch.clientX, touch.clientY);
-      
-      if (range && subtitleRef.current?.contains(range.startContainer)) {
-        const { start, end, word } = findKanjiWord(range.startContainer, range.startOffset);
-        
-        if (word) {
-          // Create a new range for the word
-          const newRange = document.createRange();
-          newRange.setStart(range.startContainer, start);
-          newRange.setEnd(range.startContainer, end);
-          
-          // Update selection
-          const selection = window.getSelection();
-          selection.removeAllRanges();
-          selection.addRange(newRange);
-          
-          onTextSelect(word);
-          
-          // Clear selection after feedback
-          setTimeout(() => selection.removeAllRanges(), 1500);
-        }
-      }
-    } else if (touchDuration >= 300 && !isSelecting) {
-      // Long press activates selection mode
+    // For long press, just enable selection mode
+    if (touchDuration >= 300) {
       setIsSelecting(true);
-      e.preventDefault();
-    } else if (isSelecting) {
-      // In selection mode, check if we have a valid selection
+    } else {
+      // For quick taps, check if we have a selection
       const selection = window.getSelection();
       const selectedText = selection.toString().trim();
       
       if (selectedText && subtitleRef.current?.contains(selection.anchorNode)) {
         onTextSelect(selectedText);
-        setIsSelecting(false);
       }
     }
   };
@@ -144,12 +103,12 @@ function SubtitleDisplay({ subtitle, onTextSelect, isMobile }) {
         } ${isSelecting ? styles.selectionMode : ''}`}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        onTouchMove={(e) => isSelecting && e.stopPropagation()}
         style={{
-          WebkitTouchCallout: isSelecting ? 'default' : 'none',
-          WebkitUserSelect: isSelecting ? 'text' : 'none',
-          userSelect: isSelecting ? 'text' : 'none',
-          touchAction: isSelecting ? 'auto' : 'none'
+          WebkitTouchCallout: 'default',
+          WebkitUserSelect: 'text',
+          userSelect: 'text',
+          touchAction: 'manipulation',
+          cursor: 'text'
         }}
       >
         <p className={`subtitle text-white text-xl md:text-2xl font-medium leading-relaxed text-center whitespace-pre-wrap ${styles.subtitleText}`}>
