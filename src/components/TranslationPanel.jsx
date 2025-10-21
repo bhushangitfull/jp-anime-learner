@@ -135,9 +135,9 @@ function TranslationPanel({ selectedText, onClear }) {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col relative">
       {/* Scrollable container for ALL content */}
-      <div className="flex-1 overflow-y-auto -webkit-overflow-scrolling-touch">
+      <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y will-change-scroll">
         {/* Header - Sticky */}
         <div className="sticky top-0 bg-gray-800 z-10 pb-3 mb-4">
           <div className="flex items-center justify-between">

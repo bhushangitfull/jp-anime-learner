@@ -55,8 +55,18 @@ function App() {
   if (useMobileLayout) {
     // Mobile/Fullscreen Layout: Full screen video with integrated mobile panel
     return (
-      <div className="w-full h-screen overflow-hidden bg-gray-900">
+      <div className="w-full h-screen overflow-hidden bg-gray-900 relative">
         <VideoPlayer onTextSelect={handleTextSelect} />
+        {selectedText && (
+          <div className="absolute bottom-0 left-0 right-0 max-h-[50vh] bg-gray-900 shadow-lg z-50">
+            <div className="h-full">
+              <TranslationPanel 
+                selectedText={selectedText}
+                onClear={handleClearSelection}
+              />
+            </div>
+          </div>
+        )}
       </div>
     );
   }
