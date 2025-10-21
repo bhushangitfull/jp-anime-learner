@@ -24,13 +24,17 @@ function VideoPlayer({ onTextSelect }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showMobilePanel, setShowMobilePanel] = useState(false);
-  const [showTranslation, setShowTranslation] = useState(false);
   
   const videoRef = useRef(null);
   const progressBarRef = useRef(null);
   const controlsTimeoutRef = useRef(null);
   const subtitleInputRef = useRef(null);
   const videoContainerRef = useRef(null);
+
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.debug('[VideoPlayer] selectedText=', selectedText, 'showMobilePanel=', showMobilePanel, 'isFullscreen=', isFullscreen);
+  }, [selectedText, showMobilePanel, isFullscreen]);
 
   // Detect mobile device
   useEffect(() => {
@@ -201,10 +205,8 @@ function VideoPlayer({ onTextSelect }) {
     if (onTextSelect) {
       onTextSelect(text);
     }
-    // Auto-open panel on mobile
-    if (isMobile || isFullscreen) {
-      setShowMobilePanel(true);
-    }
+    // Always show panel when text is selected in fullscreen or mobile
+    setShowMobilePanel(true);
   };
 
   const handleClearSelection = () => {
@@ -322,6 +324,7 @@ function VideoPlayer({ onTextSelect }) {
 
           {/* Video Display */}
           <div 
+            ref={videoContainerRef}
             className="relative flex-1 bg-black flex items-center justify-center overflow-hidden"
             onMouseMove={handleMouseMove}
             onMouseLeave={() => isPlaying && !isMobile && setShowControls(false)}
@@ -344,8 +347,8 @@ function VideoPlayer({ onTextSelect }) {
               />
             )}
 
-            {/* Translation Toggle Button (Fullscreen Mobile) */}
-            {isFullscreen && isMobile && selectedText && (
+            {/* Translation Toggle Button (Fullscreen) */}
+            {isFullscreen && selectedText && !showMobilePanel && (
               <button
                 onClick={() => setShowMobilePanel(true)}
                 className="absolute top-4 right-4 bg-blue-600 text-white p-3 rounded-lg shadow-lg z-30 hover:bg-blue-700 transition"
@@ -355,9 +358,25 @@ function VideoPlayer({ onTextSelect }) {
               </button>
             )}
 
+            {/* Fullscreen Mobile Translation Panel (rendered inside fullscreen container) */}
+            {/* Inner translation panel only in fullscreen */}
+            {isFullscreen && selectedText && (
+              <MobileTranslationPanel
+                selectedText={selectedText}
+                onClear={handleClearSelection}
+                isVisible={showMobilePanel}
+                isFullscreen={true}
+                containerRef={videoContainerRef}
+                onToggle={() => setShowMobilePanel(!showMobilePanel)}
+                dictionaryService={dictionaryService}
+                furiganaService={furiganaService}
+                translationAPIService={translationAPIService}
+              />
+            )}
+
             {/* Controls */}
             <div 
-              className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4 transition-opacity duration-300 ${
+              className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4 transition-opacity duration-300 z-20 ${
                 showControls || isMobile ? 'opacity-100' : 'opacity-0'
               }`}
             >
@@ -430,18 +449,20 @@ function VideoPlayer({ onTextSelect }) {
         </div>
       )}
 
-      {/* Mobile Translation Panel */}
-      <MobileTranslationPanel
-        selectedText={selectedText}
-        onClear={handleClearSelection}
-        isVisible={showMobilePanel && (isMobile || isFullscreen)}
-        isFullscreen={isFullscreen}
-        containerRef={videoContainerRef}
-        onToggle={() => setShowMobilePanel(!showMobilePanel)}
-        dictionaryService={dictionaryService}
-        furiganaService={furiganaService}
-        translationAPIService={translationAPIService}
-      />
+      {/* Mobile Translation Panel - only render when not fullscreen */}
+      {!isFullscreen && (
+        <MobileTranslationPanel
+          selectedText={selectedText}
+          onClear={handleClearSelection}
+          isVisible={showMobilePanel && isMobile}
+          isFullscreen={false}
+          containerRef={null}
+          onToggle={() => setShowMobilePanel(!showMobilePanel)}
+          dictionaryService={dictionaryService}
+          furiganaService={furiganaService}
+          translationAPIService={translationAPIService}
+        />
+      )}
     </div>
   );
 }

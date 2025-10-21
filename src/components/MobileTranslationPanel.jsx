@@ -14,6 +14,12 @@ function MobileTranslationPanel({
   const panelRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
 
+  // Debug logging to help diagnose why panel isn't showing
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.debug('[MobileTranslationPanel] isVisible=', isVisible, 'isOpen=', isOpen, 'selectedText=', selectedText, 'isFullscreen=', isFullscreen);
+  }, [isVisible, isOpen, selectedText, isFullscreen]);
+
   // Position panel within container in fullscreen mode
   useEffect(() => {
     if (isFullscreen && containerRef?.current && panelRef?.current) {
@@ -148,13 +154,13 @@ function MobileTranslationPanel({
         ref={panelRef}
         className={`${isFullscreen ? 'absolute' : 'fixed'} top-0 right-0 h-full w-[85vw] max-w-md
           bg-gray-800 shadow-2xl overflow-hidden
-          transition-all duration-300 ease-in-out
+          transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
         style={{
           willChange: 'transform',
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
           backfaceVisibility: 'hidden',
-          zIndex: isFullscreen ? 50 : 9999,
+          zIndex: isFullscreen ? 1000 : 9999,
           position: isFullscreen && containerRef ? 'absolute' : 'fixed'
         }}
       >
