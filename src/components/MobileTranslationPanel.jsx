@@ -1,16 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, X, Loader2, BookOpen, Globe, Copy, Check } from 'lucide-react';
+import { ChevronLeft, X, Loader2, BookOpen, Globe, Copy, Check } from 'lucide-react';
 
 function MobileTranslationPanel({
   selectedText,
   onClear,
   isVisible,
   isFullscreen,
-  onToggle,
   dictionaryService,
   furiganaService,
   translationAPIService
 }) {
+  // Auto-open panel when text is selected
+  useEffect(() => {
+    if (selectedText) {
+      setIsOpen(true);
+    }
+  }, [selectedText]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [translation, setTranslation] = useState(null);
@@ -220,6 +225,25 @@ function MobileTranslationPanel({
                           </div>
                         </div>
                       )}
+
+                      {translation.kanji && translation.kanji !== translation.kana && (
+                        <div className="border-t border-gray-600 pt-3">
+                          <p className="text-xs text-gray-400 mb-2">Kanji Reading</p>
+                          <p className="text-sm text-gray-300">
+                            <span className="text-white font-medium">{translation.kanji}</span>
+                            {' → '}
+                            <span className="text-blue-300">{translation.kana}</span>
+                          </p>
+                        </div>
+                      )}
+
+                      {translation.common && (
+                        <div className="border-t border-gray-600 pt-3">
+                          <span className="inline-flex items-center px-2 py-1 bg-green-600 text-white text-xs rounded">
+                            ⭐ Common Word
+                          </span>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="bg-red-900 bg-opacity-20 border border-red-700 rounded-lg p-4">
@@ -265,7 +289,9 @@ function MobileTranslationPanel({
       {!isOpen && selectedText && (
         <button
           onClick={handleToggle}
-          className="fixed right-0 top-1/2 -translate-y-1/2 bg-blue-600 text-white p-3 rounded-l-lg shadow-lg z-40 hover:bg-blue-700 transition"
+          className={`fixed right-0 ${
+            isFullscreen ? 'top-16' : 'top-1/2 -translate-y-1/2'
+          } bg-blue-600 text-white p-3 rounded-l-lg shadow-lg z-50 hover:bg-blue-700 transition`}
           style={{ touchAction: 'manipulation' }}
         >
           <ChevronLeft size={24} />

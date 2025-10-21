@@ -37,9 +37,9 @@ function TranslationPanel({ selectedText, onClear }) {
     initServices();
   }, []);
 
-  // Process selected text
+    // Process selected text
   useEffect(() => {
-    if (!selectedText || isInitializing) return;
+    if (!selectedText) return;
 
     const processText = async () => {
       setIsLoading(true);
@@ -78,7 +78,7 @@ function TranslationPanel({ selectedText, onClear }) {
     };
 
     processText();
-  }, [selectedText, isInitializing]);
+  }, [selectedText]);
 
   useEffect(() => {
     if (activeTab === 'online' && selectedText && !apiTranslation && !isTranslating) {
