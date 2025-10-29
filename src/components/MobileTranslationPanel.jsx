@@ -34,17 +34,7 @@ function MobileTranslationPanel({
     }
   }, [isFullscreen, containerRef]);
 
-  // Handle panel visibility
-  useEffect(() => {
-    if (selectedText && isVisible) {
-      // Set a small delay to ensure smooth animation
-      requestAnimationFrame(() => {
-        setIsOpen(true);
-      });
-    } else {
-      setIsOpen(false);
-    }
-  }, [selectedText, isVisible]);
+
   const [isLoading, setIsLoading] = useState(false);
   const [translation, setTranslation] = useState(null);
   const [hiragana, setHiragana] = useState('');
@@ -92,7 +82,7 @@ function MobileTranslationPanel({
     };
 
     processText();
-    setIsOpen(true); // Auto-open when text is selected
+    // Removed auto-open when text is selected
   }, [selectedText]);
 
   useEffect(() => {
@@ -327,18 +317,19 @@ function MobileTranslationPanel({
         </div>
       </div>
 
-      {/* Toggle Button */}
+      {/* Translation Icon Button */}
       {selectedText && !isOpen && (
-        <div 
-          className="fixed right-0 top-16 z-[9999]"
+        <div
+          className="fixed right-4 top-16 z-[9999]"
           style={{ backfaceVisibility: 'hidden' }}
         >
           <button
             onClick={handleToggle}
-            className="bg-blue-600 text-white p-3 rounded-l-lg shadow-lg hover:bg-blue-700 transition-colors"
+            className="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
             style={{ touchAction: 'manipulation' }}
+            title="Open Translation"
           >
-            <ChevronLeft size={24} />
+            <BookOpen size={24} />
           </button>
         </div>
       )}
