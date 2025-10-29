@@ -5,11 +5,32 @@ import MobileTranslationPanel from './components/MobileTranslationPanel';
 import dictionaryService from './services/dictionaryService';
 import furiganaService from './services/furiganaService';
 import translationAPIService from './services/translationAPIService';
+import { initDB } from './services/storageService';
 
 function App() {
   const [selectedText, setSelectedText] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  
+  // Initialize IndexedDB
+  useEffect(() => {
+    initDB().catch(console.error);
+  }, []);
+
+  // Track online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Detect mobile device
   useEffect(() => {
@@ -70,6 +91,11 @@ function App() {
           furiganaService={furiganaService}
           translationAPIService={translationAPIService}
         />
+        {isOffline && (
+          <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
+            You are currently offline
+          </div>
+        )}
       </div>
     );
   }
@@ -80,6 +106,11 @@ function App() {
       {/* Left side - Video Player (70% on desktop) */}
       <div className="w-full md:w-[70%] h-full flex-shrink-0 border-r border-gray-700">
         <VideoPlayer onTextSelect={handleTextSelect} />
+        {isOffline && (
+          <div className="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg">
+            You are currently offline
+          </div>
+        )}
       </div>
 
       {/* Right side - Translation Panel (30% on desktop) */}

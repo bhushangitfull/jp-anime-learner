@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prepare-pwa": "node ./scripts/prepare-pwa.js",
+    "prebuild": "npm run fetch-dict && npm run prepare-pwa",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -34,7 +36,9 @@
     "eslint-plugin-react-refresh": "^0.4.22",
     "globals": "^16.4.0",
     "tailwindcss": "^4.1.14",
+    "unzipper": "^0.10.11",
     "vite": "^7.1.7",
-    "unzipper": "^0.10.11"
+    "vite-plugin-pwa": "^1.1.0",
+    "workbox-window": "^7.3.0"
   }
 }
