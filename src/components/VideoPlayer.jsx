@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX, Maximize, FileText, Languages } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Maximize, FileText, Languages, ArrowLeft } from 'lucide-react';
 import SubtitleDisplay from './SubtitleDisplay';
 import MobileTranslationPanel from './MobileTranslationPanel';
 import { loadSRTFile, getCurrentSubtitle } from '../utils/srtParser';
@@ -7,13 +7,13 @@ import dictionaryService from '../services/dictionaryService';
 import furiganaService from '../services/furiganaService';
 import translationAPIService from '../services/translationAPIService';
 
-function VideoPlayer({ onTextSelect }) {
+function VideoPlayer({ onTextSelect, initialVideo, onBack }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
-  const [videoFile, setVideoFile] = useState(null);
+  const [videoFile, setVideoFile] = useState(initialVideo?.url || null);
   const [showControls, setShowControls] = useState(true);
   const [subtitles, setSubtitles] = useState([]);
   const [currentSubtitle, setCurrentSubtitle] = useState(null);
@@ -31,10 +31,21 @@ function VideoPlayer({ onTextSelect }) {
   const subtitleInputRef = useRef(null);
   const videoContainerRef = useRef(null);
 
+  // Set initial video if provided
   useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.debug('[VideoPlayer] selectedText=', selectedText, 'showMobilePanel=', showMobilePanel, 'isFullscreen=', isFullscreen);
-  }, [selectedText, showMobilePanel, isFullscreen]);
+    if (initialVideo?.url) {
+      setVideoFile(initialVideo.url);
+      // Try to auto-load subtitle with same name
+      autoLoadSubtitle(initialVideo.name);
+    }
+  }, [initialVideo]);
+
+  const autoLoadSubtitle = async (videoName) => {
+    // Try to find matching .srt file
+    const baseName = videoName.replace(/\.[^/.]+$/, '');
+    // In real implementation, check if .srt exists in same directory
+    console.log('Looking for subtitle:', baseName + '.srt');
+  };
 
   // Detect mobile device
   useEffect(() => {
@@ -55,7 +66,6 @@ function VideoPlayer({ onTextSelect }) {
       const isFs = Boolean(document.fullscreenElement);
       setIsFullscreen(isFs);
       
-      // Show mobile panel when entering fullscreen on mobile
       if (isFs && isMobile) {
         setShowMobilePanel(true);
       }
@@ -205,7 +215,6 @@ function VideoPlayer({ onTextSelect }) {
     if (onTextSelect) {
       onTextSelect(text);
     }
-    // Always show panel when text is selected in fullscreen or mobile
     setShowMobilePanel(true);
   };
 
@@ -271,10 +280,20 @@ function VideoPlayer({ onTextSelect }) {
       {/* Video Player Section */}
       {videoFile && (
         <div className="flex flex-col h-full">
-          {/* Subtitle Upload Bar - Hide in fullscreen */}
+          {/* Top Bar - Hide in fullscreen */}
           {!isFullscreen && (
             <div className="bg-gray-800 px-4 py-3 border-b border-gray-700 flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-4 flex-wrap">
+                {onBack && (
+                  <button
+                    onClick={onBack}
+                    className="flex items-center gap-2 text-gray-400 hover:text-white transition"
+                  >
+                    <ArrowLeft size={20} />
+                    <span className="text-sm">Back to Library</span>
+                  </button>
+                )}
+                
                 <label className="cursor-pointer flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
                   <FileText size={16} />
                   Load Subtitle (.srt)
@@ -308,17 +327,6 @@ function VideoPlayer({ onTextSelect }) {
                   </div>
                 )}
               </div>
-              <button
-                onClick={() => {
-                  setVideoFile(null);
-                  setSubtitles([]);
-                  setSubtitleFileName('');
-                  setIsPlaying(false);
-                }}
-                className="text-gray-400 hover:text-white transition text-sm"
-              >
-                Change Video
-              </button>
             </div>
           )}
 
@@ -358,8 +366,18 @@ function VideoPlayer({ onTextSelect }) {
               </button>
             )}
 
-            {/* Fullscreen Mobile Translation Panel (rendered inside fullscreen container) */}
-            {/* Inner translation panel only in fullscreen */}
+            {/* Back Button (Fullscreen) */}
+            {isFullscreen && onBack && (
+              <button
+                onClick={onBack}
+                className="absolute top-4 left-4 bg-gray-800 text-white p-3 rounded-lg shadow-lg z-30 hover:bg-gray-700 transition"
+                style={{ touchAction: 'manipulation' }}
+              >
+                <ArrowLeft size={24} />
+              </button>
+            )}
+
+            {/* Fullscreen Mobile Translation Panel */}
             {isFullscreen && selectedText && (
               <MobileTranslationPanel
                 selectedText={selectedText}
