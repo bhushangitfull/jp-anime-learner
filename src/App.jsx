@@ -5,8 +5,8 @@ import MobileTranslationPanel from './components/MobileTranslationPanel';
 import dictionaryService from './services/dictionaryService';
 import furiganaService from './services/furiganaService';
 import translationAPIService from './services/translationAPIService';
-import { initDB, storeRecentVideo, getRecentVideos } from './services/storageService';
-import { Film, FolderOpen, Play, Search, Grid, List, ArrowLeft, Trash2 } from 'lucide-react';
+import { initDB } from './services/storageService';
+import { Film, FolderOpen, Play, Search, Grid, List, Trash2 } from 'lucide-react';
 
 function App() {
   const [selectedText, setSelectedText] = useState('');
@@ -25,7 +25,7 @@ function App() {
 
   // Initialize IndexedDB
   useEffect(() => {
-    initDB().then(loadStoredVideos).catch(console.error);
+    initDB().catch(console.error);
   }, []);
 
   // Track online/offline status
@@ -79,16 +79,6 @@ function App() {
     }
   }, [searchQuery, videos]);
 
-  const loadStoredVideos = async () => {
-    try {
-      const stored = await getRecentVideos(50);
-      setVideos(stored);
-      setFilteredVideos(stored);
-    } catch (err) {
-      console.error('Failed to load videos:', err);
-    }
-  };
-
   const handleSelectDirectory = async () => {
     if (!('showDirectoryPicker' in window)) {
       alert('Your browser doesn\'t support directory access. Please use Chrome/Edge on desktop, or select files individually.');
@@ -106,16 +96,16 @@ function App() {
           
           if (fileData.type.startsWith('video/')) {
             const videoInfo = {
+              id: Date.now() + Math.random(),
               name: fileData.name,
               size: formatFileSize(fileData.size),
               sizeBytes: fileData.size,
               type: fileData.type,
+              file: fileData, // Keep the actual file object
               url: URL.createObjectURL(fileData),
-              file: fileData,
               timestamp: Date.now()
             };
             videoFiles.push(videoInfo);
-            await storeRecentVideo(videoInfo);
           }
         }
       }
@@ -135,19 +125,18 @@ function App() {
     const files = Array.from(e.target.files);
     const videoFiles = files.filter(file => file.type.startsWith('video/'));
     
-    const videoInfos = await Promise.all(videoFiles.map(async (file) => {
-      const videoInfo = {
+    const videoInfos = videoFiles.map((file) => {
+      return {
+        id: Date.now() + Math.random(),
         name: file.name,
         size: formatFileSize(file.size),
         sizeBytes: file.size,
         type: file.type,
+        file: file, // Keep the actual file object
         url: URL.createObjectURL(file),
-        file: file,
         timestamp: Date.now()
       };
-      await storeRecentVideo(videoInfo);
-      return videoInfo;
-    }));
+    });
 
     videoInfos.sort((a, b) => a.name.localeCompare(b.name));
     setVideos(prev => [...prev, ...videoInfos]);
@@ -162,6 +151,7 @@ function App() {
   };
 
   const playVideo = (video) => {
+    console.log('Playing video:', video);
     setSelectedVideo(video);
     setCurrentView('player');
   };
@@ -172,11 +162,10 @@ function App() {
     setSelectedText('');
   };
 
-  const deleteVideo = async (videoId, e) => {
+  const deleteVideo = (videoId, e) => {
     e.stopPropagation();
     if (confirm('Remove this video from library?')) {
-      setVideos(prev => prev.filter(v => v.timestamp !== videoId));
-      // In real app, also delete from IndexedDB
+      setVideos(prev => prev.filter(v => v.id !== videoId));
     }
   };
 
@@ -347,7 +336,7 @@ function App() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredVideos.map(video => (
                   <div
-                    key={video.timestamp}
+                    key={video.id}
                     onClick={() => playVideo(video)}
                     className="bg-gray-800 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition group relative"
                   >
@@ -369,7 +358,7 @@ function App() {
                     </div>
 
                     <button
-                      onClick={(e) => deleteVideo(video.timestamp, e)}
+                      onClick={(e) => deleteVideo(video.id, e)}
                       className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition z-10"
                     >
                       <Trash2 size={14} />
@@ -381,7 +370,7 @@ function App() {
               <div className="space-y-2">
                 {filteredVideos.map(video => (
                   <div
-                    key={video.timestamp}
+                    key={video.id}
                     onClick={() => playVideo(video)}
                     className="bg-gray-800 rounded-lg p-4 cursor-pointer hover:bg-gray-750 hover:ring-2 hover:ring-blue-500 transition group flex items-center gap-4 relative"
                   >
@@ -403,7 +392,7 @@ function App() {
                     <Play className="w-8 h-8 text-gray-600 group-hover:text-blue-500 transition flex-shrink-0" />
 
                     <button
-                      onClick={(e) => deleteVideo(video.timestamp, e)}
+                      onClick={(e) => deleteVideo(video.id, e)}
                       className="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition"
                     >
                       <Trash2 size={14} />

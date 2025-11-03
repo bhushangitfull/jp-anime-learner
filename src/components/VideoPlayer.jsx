@@ -13,7 +13,7 @@ function VideoPlayer({ onTextSelect, initialVideo, onBack }) {
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
-  const [videoFile, setVideoFile] = useState(initialVideo?.url || null);
+  const [videoFile, setVideoFile] = useState(null);
   const [showControls, setShowControls] = useState(true);
   const [subtitles, setSubtitles] = useState([]);
   const [currentSubtitle, setCurrentSubtitle] = useState(null);
@@ -33,19 +33,12 @@ function VideoPlayer({ onTextSelect, initialVideo, onBack }) {
 
   // Set initial video if provided
   useEffect(() => {
-    if (initialVideo?.url) {
+    if (initialVideo) {
+      console.log('Loading initial video:', initialVideo);
+      // Use the URL directly
       setVideoFile(initialVideo.url);
-      // Try to auto-load subtitle with same name
-      autoLoadSubtitle(initialVideo.name);
     }
   }, [initialVideo]);
-
-  const autoLoadSubtitle = async (videoName) => {
-    // Try to find matching .srt file
-    const baseName = videoName.replace(/\.[^/.]+$/, '');
-    // In real implementation, check if .srt exists in same directory
-    console.log('Looking for subtitle:', baseName + '.srt');
-  };
 
   // Detect mobile device
   useEffect(() => {
@@ -153,6 +146,7 @@ function VideoPlayer({ onTextSelect, initialVideo, onBack }) {
   const handleLoadedMetadata = () => {
     if (videoRef.current) {
       setDuration(videoRef.current.duration);
+      console.log('Video loaded, duration:', videoRef.current.duration);
     }
   };
 
@@ -327,6 +321,11 @@ function VideoPlayer({ onTextSelect, initialVideo, onBack }) {
                   </div>
                 )}
               </div>
+              {initialVideo && (
+                <div className="text-gray-400 text-sm truncate max-w-md">
+                  Playing: {initialVideo.name}
+                </div>
+              )}
             </div>
           )}
 
@@ -343,7 +342,12 @@ function VideoPlayer({ onTextSelect, initialVideo, onBack }) {
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
               onClick={togglePlay}
+              onError={(e) => {
+                console.error('Video error:', e);
+                alert('Failed to load video. The file may be corrupted or in an unsupported format.');
+              }}
               className="w-full h-full object-contain"
+              crossOrigin="anonymous"
             />
 
             {/* Subtitle Display */}
