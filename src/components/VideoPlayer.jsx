@@ -1,7 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Volume2, VolumeX, Maximize, FileText, Languages, ArrowLeft } from 'lucide-react';
 import SubtitleDisplay from './SubtitleDisplay';
+import MobileTranslationPanel from './MobileTranslationPanel';
 import { loadSRTFile, getCurrentSubtitle } from '../utils/srtParser';
+import dictionaryService from '../services/dictionaryService';
+import furiganaService from '../services/furiganaService';
+import translationAPIService from '../services/translationAPIService';
 
 function VideoPlayer({ onTextSelect, initialVideo, onBack }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -16,7 +20,10 @@ function VideoPlayer({ onTextSelect, initialVideo, onBack }) {
   const [subtitleFileName, setSubtitleFileName] = useState('');
   const [showSubtitles, setShowSubtitles] = useState(true);
   const [subtitleOffset, setSubtitleOffset] = useState(0);
+  const [selectedText, setSelectedText] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showMobilePanel, setShowMobilePanel] = useState(false);
   
   const videoRef = useRef(null);
   const progressBarRef = useRef(null);
@@ -33,8 +40,14 @@ function VideoPlayer({ onTextSelect, initialVideo, onBack }) {
     }
   }, [initialVideo]);
 
-  // Handle fullscreen changes
+  // Detect mobile device
   useEffect(() => {
+    const checkMobile = () => {
+      const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) 
+        || window.innerWidth < 768;
+      setIsMobile(mobile);
+    };
+    
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
