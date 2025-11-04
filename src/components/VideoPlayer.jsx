@@ -209,7 +209,10 @@ function VideoPlayer({ onTextSelect, initialVideo, onBack }) {
     if (onTextSelect) {
       onTextSelect(text);
     }
-    setShowMobilePanel(true);
+    // Don't automatically show panel on mobile
+    if (!isMobile) {
+      setShowMobilePanel(true);
+    }
   };
 
   const handleClearSelection = () => {

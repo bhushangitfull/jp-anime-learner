@@ -14,11 +14,9 @@ function MobileTranslationPanel({
   const panelRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Automatically open/close panel based on visibility prop
+  // Keep the panel state in sync with the parent's visibility prop
   useEffect(() => {
-    if (isVisible && !isOpen) {
-      setIsOpen(true);
-    } else if (!isVisible && isOpen) {
+    if (!isVisible && isOpen) {
       setIsOpen(false);
     }
   }, [isVisible, isOpen]);
