@@ -6,7 +6,7 @@ import dictionaryService from './services/dictionaryService';
 import furiganaService from './services/furiganaService';
 import translationAPIService from './services/translationAPIService';
 import { initDB } from './services/storageService';
-import { Film, FolderOpen, Play, Search, Grid, List, Trash2 } from 'lucide-react';
+import { Film, Play, Search, Grid, List, Trash2 } from 'lucide-react';
 
 function App() {
   const [selectedText, setSelectedText] = useState('');
@@ -78,48 +78,6 @@ function App() {
       setFilteredVideos(videos.filter(video => video.name.toLowerCase().includes(query)));
     }
   }, [searchQuery, videos]);
-
-  const handleSelectDirectory = async () => {
-    if (!('showDirectoryPicker' in window)) {
-      alert('Your browser doesn\'t support directory access. Please use Chrome/Edge on desktop, or select files individually.');
-      return;
-    }
-    try {
-      setIsLoading(true);
-      const dirHandle = await window.showDirectoryPicker();
-      const videoFiles = [];
-      
-      for await (const entry of dirHandle.values()) {
-        if (entry.kind === 'file') {
-          const file = await entry.getFileHandle();
-          const fileData = await file.getFile();
-          
-          if (fileData.type.startsWith('video/')) {
-            const videoInfo = {
-              id: Date.now() + Math.random(),
-              name: fileData.name,
-              size: formatFileSize(fileData.size),
-              sizeBytes: fileData.size,
-              type: fileData.type,
-              file: fileData, // Keep the actual file object
-              url: URL.createObjectURL(fileData),
-              timestamp: Date.now()
-            };
-            videoFiles.push(videoInfo);
-          }
-        }
-      }
-      videoFiles.sort((a, b) => a.name.localeCompare(b.name));
-      setVideos(prev => [...prev, ...videoFiles]);
-    } catch (err) {
-      if (err.name !== 'AbortError') {
-        console.error('Error accessing directory:', err);
-        alert('Failed to access directory');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSelectFiles = async (e) => {
     const files = Array.from(e.target.files);
@@ -267,18 +225,10 @@ function App() {
               Add videos to your library to start learning Japanese with anime
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button
-                onClick={handleSelectDirectory}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition"
-              >
-                <FolderOpen size={20} />
-                Select Folder
-              </button>
-              
+            <div className="flex justify-center">
               <label className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition cursor-pointer">
                 <Film size={20} />
-                Select Files
+                Select Videos
                 <input
                   type="file"
                   accept="video/*"
@@ -290,8 +240,7 @@ function App() {
             </div>
 
             <div className="mt-8 text-sm text-gray-500 max-w-md">
-              <p className="mb-2">💡 Tip: Use "Select Folder" on desktop browsers</p>
-              <p>On mobile, use "Select Files" to choose multiple videos</p>
+              <p>Choose multiple videos to add to your library</p>
             </div>
           </div>
         ) : (
@@ -302,18 +251,10 @@ function App() {
                 {searchQuery && ` (filtered from ${videos.length})`}
               </div>
               
-              <div className="flex gap-2">
-                <button
-                  onClick={handleSelectDirectory}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
-                >
-                  <FolderOpen size={16} />
-                  Add Folder
-                </button>
-                
+              <div className="flex">
                 <label className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition cursor-pointer">
                   <Film size={16} />
-                  Add Files
+                  Add Videos
                   <input
                     type="file"
                     accept="video/*"
