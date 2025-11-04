@@ -8,38 +8,59 @@ class DictionaryService {
   }
 
   async loadDictionary() {
-    if (this.isLoaded) {
-      return;
+    if (this.isLoaded && this.dictionary && Object.keys(this.dictionary).length > 0) {
+      return true;
     }
 
     if (this.isLoading) {
-      return;
+      // Wait for ongoing load to complete
+      while (this.isLoading) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      return this.isLoaded && this.dictionary && Object.keys(this.dictionary).length > 0;
     }
 
     this.isLoading = true;
+    this.isLoaded = false;
+    
+    // Try both dictionary files in sequence if needed
+    const dictFiles = [
+      '/data/jmdict-eng-3.5.0.json',
+      '/data/jmdict-eng-latest.json'
+    ];
 
-    try {
-      const response = await fetch('/data/jmdict-eng-3.5.0.json');
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch dictionary');
+    for (const file of dictFiles) {
+      try {
+        const response = await fetch(file);
+        
+        if (!response.ok) {
+          console.warn(`Failed to fetch dictionary from ${file}`);
+          continue;
+        }
+
+        const data = await response.json();
+        if (!data.words || !Array.isArray(data.words)) {
+          console.warn(`Invalid dictionary format in ${file}`);
+          continue;
+        }
+
+        this.dictionary = this.indexDictionary(data.words);
+        this.isLoaded = true;
+        this.isLoading = false;
+
+        console.log(`Dictionary loaded from ${file}: ${Object.keys(this.dictionary).length} entries`);
+        return true;
+
+      } catch (error) {
+        console.error(`Error loading dictionary from ${file}:`, error);
       }
-
-      const data = await response.json();
-      this.dictionary = this.indexDictionary(data.words);
-      this.isLoaded = true;
-      this.isLoading = false;
-
-      console.log(`Dictionary loaded: ${Object.keys(this.dictionary).length} entries`);
-      return true;
-
-    } catch (error) {
-      console.error('Error loading dictionary:', error);
-      this.isLoading = false;
-      this.dictionary = {};
-      this.isLoaded = true;
-      return false;
     }
+
+    // If we get here, both files failed
+    this.isLoading = false;
+    this.dictionary = {};
+    this.isLoaded = false;
+    return false;
   }
 
   indexDictionary(words) {

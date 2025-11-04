@@ -48,7 +48,27 @@ function MobileTranslationPanel({
   const [apiTranslation, setApiTranslation] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
 
-  // Process selected text
+  // Initialize services when component mounts
+  useEffect(() => {
+    const initServices = async () => {
+      try {
+        const [dictionaryLoaded] = await Promise.all([
+          dictionaryService.loadDictionary(),
+          furiganaService.initialize()
+        ]);
+        
+        if (!dictionaryLoaded) {
+          console.warn('Failed to load dictionary');
+        }
+      } catch (err) {
+        console.error('Service initialization error:', err);
+      }
+    };
+    
+    initServices();
+  }, []);  // Empty dependency array means this runs once when mounted
+
+  // Process selected text and get translations
   useEffect(() => {
     if (!selectedText) return;
 
@@ -56,8 +76,16 @@ function MobileTranslationPanel({
       setIsLoading(true);
       setError('');
       setApiTranslation(null);
+      setTranslation(null);
 
       try {
+        // First ensure services are initialized
+        await Promise.all([
+          dictionaryService.loadDictionary(),
+          furiganaService.initialize()
+        ]);
+        
+        // Load translations in parallel
         const [hira, roma] = await Promise.all([
           furiganaService.toHiragana(selectedText),
           furiganaService.toRomaji(selectedText)
@@ -66,12 +94,16 @@ function MobileTranslationPanel({
         setHiragana(hira);
         setRomaji(roma);
 
-        const results = dictionaryService.findBestMatch(selectedText);
-        if (results.length > 0) {
+        // Get dictionary results
+        const results = await dictionaryService.findBestMatch(selectedText);
+        
+        if (Array.isArray(results) && results.length > 0) {
           setTranslation(results[0]);
+          setError('');
         } else {
           setTranslation(null);
           setError('Not found in dictionary. Try Online Translation tab.');
+          setActiveTab('online');
         }
 
         setCopied(false);
@@ -95,12 +127,26 @@ function MobileTranslationPanel({
   }, [activeTab, selectedText]);
 
   const fetchOnlineTranslation = async () => {
+    if (!selectedText) return;
+    
     setIsTranslating(true);
+    setError('');
+    
     try {
+      console.log('Fetching online translation for:', selectedText);
       const result = await translationAPIService.translate(selectedText);
+      
+      if (!result) {
+        throw new Error('Translation service returned no result');
+      }
+      
+      console.log('Translation result:', result);
       setApiTranslation(result);
+      setError('');
     } catch (err) {
       console.error('API translation error:', err);
+      setError('Online translation failed. Please try again.');
+      setApiTranslation(null);
     } finally {
       setIsTranslating(false);
     }
@@ -304,14 +350,36 @@ function MobileTranslationPanel({
                             <p className="text-xs text-gray-400 mb-1">English:</p>
                             <p className="text-lg text-white">{apiTranslation.translated}</p>
                           </div>
+                          {error && (
+                            <p className="text-red-400 text-sm mt-2">{error}</p>
+                          )}
+                          <button
+                            onClick={fetchOnlineTranslation}
+                            className="mt-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm"
+                          >
+                            Translate Again
+                          </button>
                         </div>
                       ) : (
-                        <button
-                          onClick={fetchOnlineTranslation}
-                          className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm"
-                        >
-                          Get Translation
-                        </button>
+                        <div className="space-y-3">
+                          <button
+                            onClick={fetchOnlineTranslation}
+                            disabled={isTranslating}
+                            className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2"
+                          >
+                            {isTranslating ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>Translating...</span>
+                              </>
+                            ) : (
+                              <span>Get Translation</span>
+                            )}
+                          </button>
+                          {error && (
+                            <p className="text-red-400 text-sm">{error}</p>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
