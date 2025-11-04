@@ -14,11 +14,14 @@ function MobileTranslationPanel({
   const panelRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Debug logging to help diagnose why panel isn't showing
+  // Automatically open/close panel based on visibility prop
   useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.debug('[MobileTranslationPanel] isVisible=', isVisible, 'isOpen=', isOpen, 'selectedText=', selectedText, 'isFullscreen=', isFullscreen);
-  }, [isVisible, isOpen, selectedText, isFullscreen]);
+    if (isVisible && !isOpen) {
+      setIsOpen(true);
+    } else if (!isVisible && isOpen) {
+      setIsOpen(false);
+    }
+  }, [isVisible, isOpen]);
 
   // Position panel within container in fullscreen mode
   useEffect(() => {
@@ -114,19 +117,20 @@ function MobileTranslationPanel({
   };
 
   const handleToggle = () => {
-    requestAnimationFrame(() => {
-      setIsOpen(!isOpen);
-    });
+    setIsOpen(!isOpen);
   };
 
   const handleClose = () => {
     setIsOpen(false);
-    setTimeout(() => {
-      if (onClear) onClear();
-    }, 300); // Match the transition duration
+    if (onClear) {
+      setTimeout(() => {
+        onClear();
+      }, 300); // Match the transition duration
+    }
   };
 
-  if (!isVisible) return null;
+  // Don't return null immediately when !isVisible to allow for exit animations
+  // Instead, use isVisible to control the panel's transform in the JSX
 
   return (
     <>
@@ -143,8 +147,9 @@ function MobileTranslationPanel({
       <div
         ref={panelRef}
         className={`${isFullscreen ? 'absolute' : 'fixed'} top-0 right-0 h-full w-[85vw] max-w-md
-          bg-gray-800 shadow-2xl overflow-hidden
-          transition-transform duration-300 ease-in-out
+          bg-gray-800 shadow-2xl overflow-hidden z-[9999]
+          transform transition-transform duration-300 ease-in-out
+          ${(!isVisible || !isOpen) ? 'translate-x-full' : 'translate-x-0'}
           ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
         style={{
           willChange: 'transform',

@@ -182,8 +182,10 @@ function App() {
     const useMobileLayout = isMobile || isFullscreen;
 
     if (useMobileLayout) {
+      const mainContainerRef = useRef(null);
+
       return (
-        <div className="w-full h-screen overflow-hidden bg-gray-900 relative">
+        <div className="w-full h-screen overflow-hidden bg-gray-900 relative" ref={mainContainerRef}>
           <VideoPlayer 
             onTextSelect={handleTextSelect}
             initialVideo={selectedVideo}
@@ -194,6 +196,7 @@ function App() {
             onClear={handleClearSelection}
             isVisible={!!selectedText}
             isFullscreen={isFullscreen}
+            containerRef={mainContainerRef}
             dictionaryService={dictionaryService}
             furiganaService={furiganaService}
             translationAPIService={translationAPIService}
