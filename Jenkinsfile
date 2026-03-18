@@ -22,14 +22,14 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 // 'npm ci' is preferred for CI/CD as it's faster and uses package-lock.json
-                sh 'npm ci' 
+                bat 'npm ci' 
             }
         }
 
         stage('Build') {
             steps {
                 // This generates the 'dist' folder containing your static website
-                sh 'npm run build' 
+                bat 'npm run build' 
             }
         }
 
