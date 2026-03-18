@@ -22,7 +22,7 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 // 'npm ci' is preferred for CI/CD as it's faster and uses package-lock.json
-                   sh 'npm install'
+                   sh 'npm install --include=dev'
             }
         }
 
