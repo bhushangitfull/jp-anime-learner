@@ -3,7 +3,7 @@ pipeline {
 
     tools {
         // Use the exact name you gave your NodeJS installation in Global Tool Configuration
-        nodejs 'node20' 
+        nodejs 'node' 
     }
 
     environment {
