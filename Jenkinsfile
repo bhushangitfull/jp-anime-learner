@@ -23,6 +23,7 @@ pipeline {
             steps {
                 // 'npm ci' is preferred for CI/CD as it's faster and uses package-lock.json
                 bat 'npm ci' 
+                bat 'npm install unzipper' 
             }
         }
 
